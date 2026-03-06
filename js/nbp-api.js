@@ -34,7 +34,7 @@ var NbpApi = (function () {
           effectiveDate: rate.effectiveDate,
         };
       } catch (e) {
-        if (e.message && (e.message.includes("404") || e.message.includes("NBP API"))) continue;
+        if (i < 6) continue; // retry on any error except last attempt
         throw e;
       }
     }

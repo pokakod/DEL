@@ -11,6 +11,9 @@
     "settlementDate"
   ];
 
+  // Cached DOM elements (populated on DOMContentLoaded)
+  var els = {};
+
   function roundTo15(d) {
     var ms = 15 * 60 * 1000;
     return new Date(Math.round(d.getTime() / ms) * ms);
@@ -29,13 +32,23 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
+    // Cache all DOM elements once
+    FIELD_IDS.forEach(function (id) { els[id] = document.getElementById(id); });
+    ["delegationForm", "countryInfo", "countryInfoText", "rateInfo",
+     "rateTableNo", "rateCurrency", "rateValue", "rateDate",
+     "fetchRateBtn", "calculateBtn", "generatePdfBtn", "clearFormBtn",
+     "resultSection", "resDietCount", "resDietRate", "resDietTotal",
+     "resRate", "resDietPLN", "resTotalPLN", "resTotalWords",
+     "depFromHome", "nowDepartBtn", "nowReturnBtn"
+    ].forEach(function (id) { els[id] = document.getElementById(id); });
+
     initCountrySelect();
     initEventListeners();
     restoreForm();
   });
 
   function initCountrySelect() {
-    var select = document.getElementById("country");
+    var select = els.country;
     COUNTRIES.forEach(function (c, i) {
       var opt = document.createElement("option");
       opt.value = i;
@@ -50,9 +63,7 @@
 
   function saveForm() {
     var data = {};
-    FIELD_IDS.forEach(function (id) {
-      data[id] = document.getElementById(id).value;
-    });
+    FIELD_IDS.forEach(function (id) { data[id] = els[id].value; });
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
   }
 
@@ -60,129 +71,115 @@
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
-        document.getElementById("settlementDate").value = new Date().toISOString().slice(0, 10);
+        els.settlementDate.value = toDateStr(new Date());
         return;
       }
       var data = JSON.parse(raw);
       FIELD_IDS.forEach(function (id) {
-        if (data[id] !== undefined && data[id] !== "") {
-          document.getElementById(id).value = data[id];
-        }
+        if (data[id] !== undefined && data[id] !== "") els[id].value = data[id];
       });
       onCountryChange();
     } catch (e) {
-      document.getElementById("settlementDate").value = new Date().toISOString().slice(0, 10);
+      els.settlementDate.value = toDateStr(new Date());
     }
   }
 
   function initEventListeners() {
-    document.getElementById("country").addEventListener("change", onCountryChange);
-    document.getElementById("fetchRateBtn").addEventListener("click", onFetchRate);
-    document.getElementById("calculateBtn").addEventListener("click", onCalculate);
-    document.getElementById("generatePdfBtn").addEventListener("click", onGeneratePdf);
+    els.country.addEventListener("change", onCountryChange);
+    els.fetchRateBtn.addEventListener("click", onFetchRate);
+    els.calculateBtn.addEventListener("click", onCalculate);
+    els.generatePdfBtn.addEventListener("click", onGeneratePdf);
 
-    document.getElementById("clearFormBtn").addEventListener("click", function () {
+    els.clearFormBtn.addEventListener("click", function () {
       if (!confirm("Wyczyścić wszystkie dane formularza?")) return;
-      FIELD_IDS.forEach(function (id) {
-        document.getElementById(id).value = "";
-      });
-      document.getElementById("depTime").value = "08:00";
-      document.getElementById("retTime").value = "14:00";
-      document.getElementById("arrHomeTime").value = "22:00";
-      document.getElementById("borderExitTime").value = "17:00";
-      document.getElementById("borderEntryTime").value = "22:00";
-      document.getElementById("settlementDate").value = new Date().toISOString().slice(0, 10);
-      document.getElementById("depFromHome").checked = false;
+      FIELD_IDS.forEach(function (id) { els[id].value = ""; });
+      els.depTime.value = "08:00";
+      els.retTime.value = "14:00";
+      els.arrHomeTime.value = "22:00";
+      els.borderExitTime.value = "17:00";
+      els.borderEntryTime.value = "22:00";
+      els.settlementDate.value = toDateStr(new Date());
+      els.depFromHome.checked = false;
       state.selectedCountry = null;
       state.nbpRate = null;
       state.calculation = null;
-      document.getElementById("countryInfo").style.display = "none";
-      document.getElementById("rateInfo").style.display = "none";
-      document.getElementById("resultSection").style.display = "none";
+      els.countryInfo.style.display = "none";
+      els.rateInfo.style.display = "none";
+      els.resultSection.style.display = "none";
       localStorage.removeItem(STORAGE_KEY);
     });
 
-    document.getElementById("depDate").addEventListener("change", function (e) {
+    els.depDate.addEventListener("change", function (e) {
       var val = e.target.value;
-      if (!document.getElementById("borderExitDate").value) {
-        document.getElementById("borderExitDate").value = val;
-      }
-      // Set min dates on all subsequent date fields
-      document.getElementById("arrDestDate").min = val;
-      document.getElementById("retDate").min = val;
-      document.getElementById("arrHomeDate").min = val;
-      document.getElementById("borderExitDate").min = val;
-      document.getElementById("borderEntryDate").min = val;
-      document.getElementById("settlementDate").min = val;
+      if (!els.borderExitDate.value) els.borderExitDate.value = val;
+      els.arrDestDate.min = val;
+      els.retDate.min = val;
+      els.arrHomeDate.min = val;
+      els.borderExitDate.min = val;
+      els.borderEntryDate.min = val;
+      els.settlementDate.min = val;
     });
-    document.getElementById("retDate").addEventListener("change", function (e) {
+    els.retDate.addEventListener("change", function (e) {
       var val = e.target.value;
-      document.getElementById("arrHomeDate").min = val;
-      document.getElementById("borderEntryDate").min = val;
+      els.arrHomeDate.min = val;
+      els.borderEntryDate.min = val;
     });
-    document.getElementById("arrHomeDate").addEventListener("change", function (e) {
-      if (!document.getElementById("borderEntryDate").value) {
-        document.getElementById("borderEntryDate").value = e.target.value;
-      }
+    els.arrHomeDate.addEventListener("change", function (e) {
+      if (!els.borderEntryDate.value) els.borderEntryDate.value = e.target.value;
       var d = new Date(e.target.value);
       d.setDate(d.getDate() + 1);
-      document.getElementById("settlementDate").value = toDateStr(d);
+      els.settlementDate.value = toDateStr(d);
     });
 
     // Prevent buttons inside summary from toggling the details
-    document.getElementById("nowDepartBtn").closest("summary").addEventListener("click", function (e) {
+    els.nowDepartBtn.closest("summary").addEventListener("click", function (e) {
       if (e.target.closest(".summary-actions")) e.preventDefault();
     });
 
-    document.getElementById("nowDepartBtn").addEventListener("click", function (e) {
+    els.nowDepartBtn.addEventListener("click", function (e) {
       e.preventDefault();
       e.stopPropagation();
       var now = roundTo15(new Date());
-      document.getElementById("depDate").value = toDateStr(now);
-      document.getElementById("depTime").value = toTimeStr(now);
-      if (!document.getElementById("borderExitDate").value) {
-        document.getElementById("borderExitDate").value = toDateStr(now);
-      }
+      els.depDate.value = toDateStr(now);
+      els.depTime.value = toTimeStr(now);
+      if (!els.borderExitDate.value) els.borderExitDate.value = toDateStr(now);
       saveForm();
     });
 
-    document.getElementById("nowReturnBtn").addEventListener("click", function (e) {
+    els.nowReturnBtn.addEventListener("click", function (e) {
       e.preventDefault();
       e.stopPropagation();
       var now = roundTo15(new Date());
-      document.getElementById("retDate").value = toDateStr(now);
-      document.getElementById("retTime").value = toTimeStr(now);
-      document.getElementById("arrHomeDate").value = toDateStr(now);
-      document.getElementById("arrHomeTime").value = toTimeStr(now);
-      if (!document.getElementById("borderEntryDate").value) {
-        document.getElementById("borderEntryDate").value = toDateStr(now);
-      }
+      els.retDate.value = toDateStr(now);
+      els.retTime.value = toTimeStr(now);
+      els.arrHomeDate.value = toDateStr(now);
+      els.arrHomeTime.value = toTimeStr(now);
+      if (!els.borderEntryDate.value) els.borderEntryDate.value = toDateStr(now);
       var nextDay = new Date(now);
       nextDay.setDate(nextDay.getDate() + 1);
-      document.getElementById("settlementDate").value = toDateStr(nextDay);
+      els.settlementDate.value = toDateStr(nextDay);
       saveForm();
     });
 
-    document.getElementById("depFromHome").addEventListener("change", function () {
+    els.depFromHome.addEventListener("change", function () {
       if (this.checked) {
-        var addr = document.getElementById("employeeAddress").value;
+        var addr = els.employeeAddress.value;
         var city = addr.split(",").pop().trim().replace(/^\d{2}-\d{3}\s*/, "");
-        if (city) document.getElementById("depCity").value = city;
+        if (city) els.depCity.value = city;
       }
       saveForm();
     });
 
     // Auto-save on any input change
-    document.getElementById("delegationForm").addEventListener("input", saveForm);
-    document.getElementById("delegationForm").addEventListener("change", saveForm);
+    els.delegationForm.addEventListener("input", saveForm);
+    els.delegationForm.addEventListener("change", saveForm);
   }
 
   function onCountryChange() {
-    var select = document.getElementById("country");
-    var idx = parseInt(select.value);
+    var idx = parseInt(els.country.value);
     if (isNaN(idx)) {
       state.selectedCountry = null;
-      document.getElementById("countryInfo").style.display = "none";
+      els.countryInfo.style.display = "none";
       return;
     }
 
@@ -190,12 +187,12 @@
     var c = state.selectedCountry;
     var sym = CURRENCY_SYMBOLS[c.currency] || c.currency;
 
-    document.getElementById("countryInfo").style.display = "block";
-    document.getElementById("countryInfoText").textContent =
+    els.countryInfo.style.display = "block";
+    els.countryInfoText.textContent =
       "Dieta: " + c.dietRate + " " + sym + " | Waluta: " + c.currency + " | Limit noclegu: " + c.hotelLimit + " " + sym;
 
     state.nbpRate = null;
-    document.getElementById("rateInfo").style.display = "none";
+    els.rateInfo.style.display = "none";
   }
 
   async function onFetchRate() {
@@ -204,13 +201,13 @@
       return;
     }
 
-    var settlementDate = document.getElementById("settlementDate").value;
+    var settlementDate = els.settlementDate.value;
     if (!settlementDate) {
-      showError("Podaj date rozliczenia.");
+      showError("Podaj datę rozliczenia.");
       return;
     }
 
-    var btn = document.getElementById("fetchRateBtn");
+    var btn = els.fetchRateBtn;
     btn.disabled = true;
     btn.innerHTML = 'Pobieram... <span class="spinner"></span>';
     clearError();
@@ -219,13 +216,13 @@
       var rate = await NbpApi.fetchRateBeforeDate(state.selectedCountry.currency, settlementDate);
       state.nbpRate = rate;
 
-      document.getElementById("rateInfo").style.display = "grid";
-      document.getElementById("rateTableNo").textContent = rate.no;
-      document.getElementById("rateCurrency").textContent = state.selectedCountry.currency;
-      document.getElementById("rateValue").textContent = DelegationUtils.formatAmount(rate.mid, 4) + " zl";
-      document.getElementById("rateDate").textContent = DelegationUtils.formatDate(rate.effectiveDate);
+      els.rateInfo.style.display = "grid";
+      els.rateTableNo.textContent = rate.no;
+      els.rateCurrency.textContent = state.selectedCountry.currency;
+      els.rateValue.textContent = DelegationUtils.formatAmount(rate.mid, 4) + " zł";
+      els.rateDate.textContent = DelegationUtils.formatDate(rate.effectiveDate);
     } catch (e) {
-      showError("Blad pobierania kursu NBP: " + e.message);
+      showError("Błąd pobierania kursu NBP: " + e.message);
     } finally {
       btn.disabled = false;
       btn.textContent = "Pobierz kurs NBP";
@@ -235,70 +232,71 @@
   async function onCalculate() {
     clearError();
 
-    var form = document.getElementById("delegationForm");
-    if (!form.reportValidity()) return;
+    // Check required fields manually for better mobile compatibility
+    var requiredFields = els.delegationForm.querySelectorAll("[required]");
+    for (var i = 0; i < requiredFields.length; i++) {
+      if (!requiredFields[i].value) {
+        var fieldWrap = requiredFields[i].closest(".field, .field-inline");
+        var labelEl = fieldWrap ? fieldWrap.querySelector("label") : null;
+        showError("Wypełnij pole: " + (labelEl ? labelEl.textContent.replace(" *", "") : requiredFields[i].id));
+        requiredFields[i].focus();
+        return;
+      }
+    }
 
     if (!state.selectedCountry) {
       showError("Wybierz kraj.");
       return;
     }
 
-    if (!state.nbpRate) {
-      await onFetchRate();
-      if (!state.nbpRate) return;
+    try {
+      if (!state.nbpRate) {
+        await onFetchRate();
+        if (!state.nbpRate) return;
+      }
+
+      var c = state.selectedCountry;
+      var rate = state.nbpRate;
+
+      var depTime = DelegationUtils.parseDatetime(els.depDate.value, els.depTime.value);
+      var arrHomeTime = DelegationUtils.parseDatetime(els.arrHomeDate.value, els.arrHomeTime.value);
+      var borderExit = DelegationUtils.parseDatetime(els.borderExitDate.value, els.borderExitTime.value);
+      var borderEntry = DelegationUtils.parseDatetime(els.borderEntryDate.value, els.borderEntryTime.value);
+
+      var foreignDietInfo = DelegationUtils.calculateForeignDiets(borderExit, borderEntry);
+      var domesticDiets = DelegationUtils.calculateDomesticDiets(depTime, borderExit, borderEntry, arrHomeTime);
+
+      var effectiveDietRate = c.dietRate;
+      var dietTotalForeign = DelegationUtils.calculateDietAmount(foreignDietInfo, effectiveDietRate);
+      var totalForeign = dietTotalForeign;
+      var totalPLN = Math.round(totalForeign * rate.mid * 100) / 100;
+
+      var sym = CURRENCY_SYMBOLS[c.currency] || c.currency;
+
+      state.calculation = {
+        foreignDietInfo: foreignDietInfo,
+        domesticDiets: domesticDiets,
+        effectiveDietRate: effectiveDietRate,
+        dietTotalForeign: dietTotalForeign,
+        totalForeign: totalForeign,
+        totalPLN: totalPLN,
+      };
+
+      var fmt = DelegationUtils.formatAmount;
+      var dietCountLabel = DelegationUtils.formatDietCount(foreignDietInfo);
+      els.resultSection.style.display = "block";
+      els.resDietCount.textContent = dietCountLabel;
+      els.resDietRate.textContent = fmt(effectiveDietRate) + " " + sym;
+      els.resDietTotal.textContent = fmt(dietTotalForeign) + " " + sym;
+      els.resRate.textContent = fmt(rate.mid, 4) + " zł";
+      els.resDietPLN.textContent = fmt(totalPLN) + " zł";
+      els.resTotalPLN.textContent = fmt(totalPLN) + " PLN";
+      els.resTotalWords.textContent = DelegationUtils.amountToWords(totalPLN, "PLN");
+
+      els.resultSection.scrollIntoView({ behavior: "smooth" });
+    } catch (e) {
+      showError("Błąd obliczania: " + e.message);
     }
-
-    var c = state.selectedCountry;
-    var rate = state.nbpRate;
-
-    var depTime = DelegationUtils.parseDatetime(
-      document.getElementById("depDate").value,
-      document.getElementById("depTime").value
-    );
-    var arrHomeTime = DelegationUtils.parseDatetime(
-      document.getElementById("arrHomeDate").value,
-      document.getElementById("arrHomeTime").value
-    );
-    var borderExit = DelegationUtils.parseDatetime(
-      document.getElementById("borderExitDate").value,
-      document.getElementById("borderExitTime").value
-    );
-    var borderEntry = DelegationUtils.parseDatetime(
-      document.getElementById("borderEntryDate").value,
-      document.getElementById("borderEntryTime").value
-    );
-
-    var foreignDietInfo = DelegationUtils.calculateForeignDiets(borderExit, borderEntry);
-    var domesticDiets = DelegationUtils.calculateDomesticDiets(depTime, borderExit, borderEntry, arrHomeTime);
-
-    var effectiveDietRate = c.dietRate;
-    var dietTotalForeign = DelegationUtils.calculateDietAmount(foreignDietInfo, effectiveDietRate);
-    var totalForeign = dietTotalForeign;
-    var totalPLN = Math.round(totalForeign * rate.mid * 100) / 100;
-
-    var sym = CURRENCY_SYMBOLS[c.currency] || c.currency;
-
-    state.calculation = {
-      foreignDietInfo: foreignDietInfo,
-      domesticDiets: domesticDiets,
-      effectiveDietRate: effectiveDietRate,
-      dietTotalForeign: dietTotalForeign,
-      totalForeign: totalForeign,
-      totalPLN: totalPLN,
-    };
-
-    var fmt = DelegationUtils.formatAmount;
-    var dietCountLabel = DelegationUtils.formatDietCount(foreignDietInfo);
-    document.getElementById("resultSection").style.display = "block";
-    document.getElementById("resDietCount").textContent = dietCountLabel;
-    document.getElementById("resDietRate").textContent = fmt(effectiveDietRate) + " " + sym;
-    document.getElementById("resDietTotal").textContent = fmt(dietTotalForeign) + " " + sym;
-    document.getElementById("resRate").textContent = fmt(rate.mid, 4) + " zl";
-    document.getElementById("resDietPLN").textContent = fmt(totalPLN) + " zl";
-    document.getElementById("resTotalPLN").textContent = fmt(totalPLN) + " PLN";
-    document.getElementById("resTotalWords").textContent = DelegationUtils.amountToWords(totalPLN, "PLN");
-
-    document.getElementById("resultSection").scrollIntoView({ behavior: "smooth" });
   }
 
   function onGeneratePdf() {
@@ -307,55 +305,34 @@
       return;
     }
 
-    var data = {
+    PdfGenerator.generate({
       employee: {
-        name: document.getElementById("employeeName").value,
-        address: document.getElementById("employeeAddress").value,
-        nip: document.getElementById("employeeNip").value,
-        email: document.getElementById("employeeEmail").value,
-        phone: document.getElementById("employeePhone").value,
+        name: els.employeeName.value,
+        address: els.employeeAddress.value,
+        nip: els.employeeNip.value,
+        email: els.employeeEmail.value,
+        phone: els.employeePhone.value,
       },
       trip: {
-        number: document.getElementById("tripNumber").value,
-        projectNumber: document.getElementById("projectNumber").value,
-        purpose: document.getElementById("tripPurpose").value,
+        number: els.tripNumber.value,
+        projectNumber: els.projectNumber.value,
+        purpose: els.tripPurpose.value,
         country: state.selectedCountry.name,
-        destinationCity: document.getElementById("destinationCity").value,
-        transport: document.getElementById("transport").value,
+        destinationCity: els.destinationCity.value,
+        transport: els.transport.value,
       },
-      departure: {
-        city: document.getElementById("depCity").value,
-        date: document.getElementById("depDate").value,
-        time: document.getElementById("depTime").value,
-      },
-      arrivalDest: {
-        date: document.getElementById("arrDestDate").value,
-        time: document.getElementById("arrDestTime").value,
-      },
-      returnDep: {
-        date: document.getElementById("retDate").value,
-        time: document.getElementById("retTime").value,
-      },
-      arrivalHome: {
-        date: document.getElementById("arrHomeDate").value,
-        time: document.getElementById("arrHomeTime").value,
-      },
-      borderExit: {
-        date: document.getElementById("borderExitDate").value,
-        time: document.getElementById("borderExitTime").value,
-      },
-      borderEntry: {
-        date: document.getElementById("borderEntryDate").value,
-        time: document.getElementById("borderEntryTime").value,
-      },
-      settlementDate: document.getElementById("settlementDate").value,
+      departure: { city: els.depCity.value, date: els.depDate.value, time: els.depTime.value },
+      arrivalDest: { date: els.arrDestDate.value, time: els.arrDestTime.value },
+      returnDep: { date: els.retDate.value, time: els.retTime.value },
+      arrivalHome: { date: els.arrHomeDate.value, time: els.arrHomeTime.value },
+      borderExit: { date: els.borderExitDate.value, time: els.borderExitTime.value },
+      borderEntry: { date: els.borderEntryDate.value, time: els.borderEntryTime.value },
+      settlementDate: els.settlementDate.value,
       attachmentsCount: 0,
       country: state.selectedCountry,
       nbpRate: state.nbpRate,
       calculation: state.calculation,
-    };
-
-    PdfGenerator.generate(data);
+    });
   }
 
   function showError(msg) {
@@ -364,7 +341,7 @@
     el.className = "error-msg";
     el.id = "errorMsg";
     el.textContent = msg;
-    document.getElementById("delegationForm").prepend(el);
+    els.delegationForm.prepend(el);
     el.scrollIntoView({ behavior: "smooth" });
   }
 
