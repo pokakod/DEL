@@ -81,7 +81,7 @@ body {
 .container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: 0 1.5rem 4rem;
 }
 
 /* === Header toolbar === */
@@ -90,7 +90,7 @@ body {
   justify-content: flex-end;
   align-items: center;
   gap: 3.25rem;
-  padding: 0.75rem 0 0;
+  padding: 0;
 }
 
 .header-btn.clear-btn {
@@ -228,7 +228,7 @@ header h1 {
 
 .summary-actions {
   display: flex;
-  gap: 6rem;
+  gap: 3rem;
   margin: 0 auto;
 }
 
@@ -310,7 +310,7 @@ header h1 {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin: 0 auto 0 3rem;
+  margin: 0 auto 0 1.5rem;
 }
 
 .field-inline {
