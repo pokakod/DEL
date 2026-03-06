@@ -1,16 +1,16 @@
-var CACHE_NAME = "delegacje-v3";
+var CACHE_NAME = "delegacje-v1772816427";
 var ASSETS = [
-  "/index.html",
-  "/style.css",
-  "/manifest.json",
-  "/js/countries.js",
-  "/js/nbp-api.js",
-  "/js/utils.js",
-  "/js/app.js",
-  "/js/pdf-generator.js",
-  "/js/jspdf.umd.min.js",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png"
+  "./index.html",
+  "./style.css",
+  "./manifest.json",
+  "./js/countries.js",
+  "./js/nbp-api.js",
+  "./js/utils.js",
+  "./js/app.js",
+  "./js/pdf-generator.js",
+  "./js/jspdf.umd.min.js",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png"
 ];
 
 self.addEventListener("install", function (e) {

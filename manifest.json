@@ -2,7 +2,7 @@
   "name": "Rozliczenie Delegacji Zagranicznej",
   "short_name": "Delegacje",
   "description": "Kalkulator rozliczenia delegacji zagranicznej z kursami NBP",
-  "start_url": "/index.html",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#f9fafb",
   "theme_color": "#2563eb",
