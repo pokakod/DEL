@@ -228,8 +228,9 @@ header h1 {
 
 .summary-actions {
   display: flex;
-  gap: 3rem;
-  margin: 0 auto;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-left: 2rem;
 }
 
 .btn-sm.btn-now {
