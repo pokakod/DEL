@@ -72,25 +72,25 @@ var PdfGenerator = (function () {
     PdfFonts.register(doc);
 
     // ── HEADER ──
-    fc(doc, C.black);
-    doc.rect(0, 0, W, 22, "F");
-
+    y = 14;
     doc.setFont("Arial", "bold");
-    doc.setFontSize(11);
-    tc(doc, C.white);
-    doc.text("ROZLICZENIE DELEGACJI ZAGRANICZNEJ", W / 2, 9, { align: "center" });
+    doc.setFontSize(12);
+    tc(doc, C.black);
+    doc.text("ROZLICZENIE DELEGACJI ZAGRANICZNEJ", W / 2, y, { align: "center" });
+    y += 5;
 
     doc.setFont("Arial", "normal");
     doc.setFontSize(7);
-    doc.setTextColor(170, 170, 170);
+    tc(doc, C.label);
     var sub = data.trip.number;
     if (data.trip.projectNumber) sub += "  /  Projekt " + data.trip.projectNumber;
-    doc.text(sub, W / 2, 15, { align: "center" });
+    doc.text(sub, M, y);
 
-    doc.setFontSize(6);
-    doc.text(fmtDate(data.settlementDate), W - M, 19, { align: "right" });
+    doc.text("Data rozliczenia: " + fmtDate(data.settlementDate), W - M, y, { align: "right" });
+    y += 2;
 
-    y = 28;
+    line(doc, M, y, M + CW, C.black, 0.5);
+    y += 6;
 
     // ── DANE ──
     var c1 = M, c2 = M + CW / 2 + 4;
@@ -243,12 +243,11 @@ var PdfGenerator = (function () {
     }
     y += 9;
 
-    // ── DO WYPŁATY — flat box ──
+    // ── DO WYPŁATY — outlined box ──
     var boxH = 24;
-    fc(doc, C.bg);
-    doc.rect(M, y, CW, boxH, "F");
-    line(doc, M, y, M + CW, C.black, 0.4);
-    line(doc, M, y + boxH, M + CW, C.black, 0.4);
+    dc(doc, C.black);
+    doc.setLineWidth(0.5);
+    doc.rect(M, y, CW, boxH);
 
     doc.setFont("Arial", "normal"); doc.setFontSize(6.5); tc(doc, C.label);
     doc.text("DO WYPŁATY", M + 6, y + 5);
