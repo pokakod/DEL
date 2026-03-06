@@ -1,0 +1,96 @@
+// Stawki diet zagranicznych wg Rozporządzenia MPiPS z 29.01.2013 r.
+// (Dz.U. 2023 poz. 2190 - tekst jednolity)
+// Format: { name, currency, dietRate, hotelLimit }
+
+const COUNTRIES = [
+  // Europa
+  { name: "Albania", currency: "EUR", dietRate: 41, hotelLimit: 120 },
+  { name: "Andora", currency: "EUR", dietRate: 50, hotelLimit: 200 },
+  { name: "Austria", currency: "EUR", dietRate: 57, hotelLimit: 150 },
+  { name: "Belgia", currency: "EUR", dietRate: 55, hotelLimit: 200 },
+  { name: "Białoruś", currency: "EUR", dietRate: 42, hotelLimit: 130 },
+  { name: "Bośnia i Hercegowina", currency: "EUR", dietRate: 41, hotelLimit: 100 },
+  { name: "Bułgaria", currency: "EUR", dietRate: 40, hotelLimit: 120 },
+  { name: "Chorwacja", currency: "EUR", dietRate: 42, hotelLimit: 125 },
+  { name: "Czarnogóra", currency: "EUR", dietRate: 40, hotelLimit: 110 },
+  { name: "Czechy", currency: "EUR", dietRate: 41, hotelLimit: 120 },
+  { name: "Dania", currency: "DKK", dietRate: 446, hotelLimit: 1430 },
+  { name: "Estonia", currency: "EUR", dietRate: 45, hotelLimit: 110 },
+  { name: "Finlandia", currency: "EUR", dietRate: 53, hotelLimit: 180 },
+  { name: "Francja", currency: "EUR", dietRate: 55, hotelLimit: 200 },
+  { name: "Grecja", currency: "EUR", dietRate: 50, hotelLimit: 160 },
+  { name: "Gruzja", currency: "EUR", dietRate: 48, hotelLimit: 160 },
+  { name: "Hiszpania", currency: "EUR", dietRate: 50, hotelLimit: 200 },
+  { name: "Holandia", currency: "EUR", dietRate: 50, hotelLimit: 150 },
+  { name: "Irlandia", currency: "EUR", dietRate: 52, hotelLimit: 160 },
+  { name: "Islandia", currency: "EUR", dietRate: 56, hotelLimit: 160 },
+  { name: "Kosowo", currency: "EUR", dietRate: 41, hotelLimit: 120 },
+  { name: "Liechtenstein", currency: "CHF", dietRate: 88, hotelLimit: 220 },
+  { name: "Litwa", currency: "EUR", dietRate: 45, hotelLimit: 150 },
+  { name: "Luksemburg", currency: "EUR", dietRate: 55, hotelLimit: 200 },
+  { name: "Łotwa", currency: "EUR", dietRate: 57, hotelLimit: 132 },
+  { name: "Macedonia Północna", currency: "EUR", dietRate: 43, hotelLimit: 138 },
+  { name: "Malta", currency: "EUR", dietRate: 43, hotelLimit: 180 },
+  { name: "Mołdawia", currency: "EUR", dietRate: 45, hotelLimit: 94 },
+  { name: "Monako", currency: "EUR", dietRate: 55, hotelLimit: 200 },
+  { name: "Niemcy", currency: "EUR", dietRate: 49, hotelLimit: 170 },
+  { name: "Norwegia", currency: "NOK", dietRate: 496, hotelLimit: 1650 },
+  { name: "Portugalia", currency: "EUR", dietRate: 49, hotelLimit: 150 },
+  { name: "Rosja", currency: "EUR", dietRate: 48, hotelLimit: 200 },
+  { name: "Rumunia", currency: "EUR", dietRate: 42, hotelLimit: 110 },
+  { name: "San Marino", currency: "EUR", dietRate: 53, hotelLimit: 192 },
+  { name: "Serbia", currency: "EUR", dietRate: 40, hotelLimit: 110 },
+  { name: "Słowacja", currency: "EUR", dietRate: 47, hotelLimit: 132 },
+  { name: "Słowenia", currency: "EUR", dietRate: 45, hotelLimit: 143 },
+  { name: "Szwajcaria", currency: "CHF", dietRate: 88, hotelLimit: 220 },
+  { name: "Szwecja", currency: "SEK", dietRate: 510, hotelLimit: 2000 },
+  { name: "Turcja", currency: "USD", dietRate: 53, hotelLimit: 185 },
+  { name: "Ukraina", currency: "EUR", dietRate: 41, hotelLimit: 180 },
+  { name: "Watykan", currency: "EUR", dietRate: 53, hotelLimit: 192 },
+  { name: "Węgry", currency: "EUR", dietRate: 44, hotelLimit: 143 },
+  { name: "Wielka Brytania", currency: "GBP", dietRate: 45, hotelLimit: 220 },
+  { name: "Włochy", currency: "EUR", dietRate: 53, hotelLimit: 192 },
+
+  // Pozaeuropejskie (najczęstsze)
+  { name: "Arabia Saudyjska", currency: "EUR", dietRate: 50, hotelLimit: 200 },
+  { name: "Argentyna", currency: "USD", dietRate: 50, hotelLimit: 150 },
+  { name: "Australia", currency: "AUD", dietRate: 95, hotelLimit: 270 },
+  { name: "Brazylia", currency: "USD", dietRate: 48, hotelLimit: 150 },
+  { name: "Chile", currency: "USD", dietRate: 50, hotelLimit: 150 },
+  { name: "Chiny", currency: "EUR", dietRate: 55, hotelLimit: 170 },
+  { name: "Egipt", currency: "USD", dietRate: 55, hotelLimit: 150 },
+  { name: "Indie", currency: "EUR", dietRate: 42, hotelLimit: 210 },
+  { name: "Indonezja", currency: "USD", dietRate: 44, hotelLimit: 120 },
+  { name: "Izrael", currency: "EUR", dietRate: 70, hotelLimit: 200 },
+  { name: "Japonia", currency: "JPY", dietRate: 7532, hotelLimit: 22000 },
+  { name: "Kanada", currency: "CAD", dietRate: 71, hotelLimit: 190 },
+  { name: "Korea Południowa", currency: "EUR", dietRate: 47, hotelLimit: 200 },
+  { name: "Meksyk", currency: "USD", dietRate: 53, hotelLimit: 180 },
+  { name: "RPA", currency: "USD", dietRate: 52, hotelLimit: 200 },
+  { name: "Singapur", currency: "USD", dietRate: 56, hotelLimit: 250 },
+  { name: "Stany Zjednoczone (USA)", currency: "USD", dietRate: 59, hotelLimit: 200 },
+  { name: "Tajlandia", currency: "USD", dietRate: 42, hotelLimit: 120 },
+  { name: "Zjednoczone Emiraty Arabskie", currency: "EUR", dietRate: 45, hotelLimit: 300 },
+
+  // Domyślna stawka dla niewymienionych krajów
+  { name: "Inne państwo (stawka domyślna)", currency: "EUR", dietRate: 41, hotelLimit: 140 },
+];
+
+// Dieta krajowa
+const DOMESTIC_DIET_RATE = 45; // PLN (od 01.01.2025)
+
+// Mapowanie walut na symbole
+const CURRENCY_SYMBOLS = {
+  EUR: "€",
+  USD: "$",
+  GBP: "£",
+  CHF: "CHF",
+  DKK: "DKK",
+  NOK: "NOK",
+  SEK: "SEK",
+  CZK: "CZK",
+  CAD: "CAD",
+  AUD: "AUD",
+  JPY: "¥",
+  PLN: "zł",
+};

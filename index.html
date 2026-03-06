@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Delegacje" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>Rozliczenie Delegacji Zagranicznej</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="js/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Rozliczenie Delegacji Zagranicznej</h1>
+      <p class="subtitle">Automatyczne obliczanie diet i kursów NBP</p>
+    </header>
+
+    <form id="delegationForm" autocomplete="off">
+      <!-- SEKCJA 1: Dane pracownika -->
+      <details class="form-section" open>
+        <summary><h2><span class="section-num">1</span> Dane pracownika</h2></summary>
+        <div class="section-body">
+          <div class="grid-2">
+            <div class="field">
+              <label for="employeeName">Imię i nazwisko *</label>
+              <input type="text" id="employeeName" required placeholder="Jan Kowalski" />
+            </div>
+            <div class="field">
+              <label for="employeeAddress">Adres</label>
+              <input type="text" id="employeeAddress" placeholder="ul. Przykładowa 1, 00-001 Warszawa" />
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="employeeNip">NIP</label>
+              <input type="text" id="employeeNip" placeholder="1234567890" />
+            </div>
+            <div class="field">
+              <label for="employeeEmail">Email</label>
+              <input type="email" id="employeeEmail" placeholder="jan@example.com" />
+            </div>
+            <div class="field">
+              <label for="employeePhone">Telefon</label>
+              <input type="text" id="employeePhone" placeholder="+48 123 456 789" />
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- SEKCJA 2: Dane delegacji -->
+      <details class="form-section" open>
+        <summary><h2><span class="section-num">2</span> Dane delegacji</h2></summary>
+        <div class="section-body">
+          <div class="grid-3">
+            <div class="field">
+              <label for="tripNumber">Numer wyjazdu *</label>
+              <input type="text" id="tripNumber" required placeholder="001/2026" />
+            </div>
+            <div class="field">
+              <label for="projectNumber">Nr projektu</label>
+              <input type="text" id="projectNumber" placeholder="250122" />
+            </div>
+            <div class="field">
+              <label for="tripPurpose">Cel podróży *</label>
+              <input type="text" id="tripPurpose" required placeholder="Programowanie" />
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="country">Kraj *</label>
+              <select id="country" required>
+                <option value="">-- Wybierz kraj --</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="destinationCity">Miejscowość docelowa *</label>
+              <input type="text" id="destinationCity" required placeholder="Berlin" />
+            </div>
+            <div class="field">
+              <label for="transport">Środek lokomocji</label>
+              <select id="transport">
+                <option value="Samochód służbowy">Samochód służbowy</option>
+                <option value="Samochód prywatny">Samochód prywatny</option>
+                <option value="Pociąg">Pociąg</option>
+                <option value="Samolot">Samolot</option>
+                <option value="Autobus">Autobus</option>
+                <option value="Inny">Inny</option>
+              </select>
+            </div>
+          </div>
+          <div class="info-box" id="countryInfo" style="display:none;">
+            <span id="countryInfoText"></span>
+          </div>
+        </div>
+      </details>
+
+      <!-- SEKCJA 3: Wyjazd / Przyjazd -->
+      <details class="form-section" open>
+        <summary><h2><span class="section-num">3</span> Trasa podróży</h2></summary>
+        <div class="section-body">
+          <h3>Wyjazd</h3>
+          <div class="grid-4">
+            <div class="field">
+              <label for="depCity">Z miejscowości *</label>
+              <input type="text" id="depCity" required placeholder="Katowice" />
+            </div>
+            <div class="field">
+              <label for="depDate">Data *</label>
+              <input type="date" id="depDate" required />
+            </div>
+            <div class="field">
+              <label for="depTime">Godzina *</label>
+              <input type="time" id="depTime" required value="08:00" />
+            </div>
+            <div class="field">
+              <label for="arrDestDate">Data przyjazdu do celu</label>
+              <input type="date" id="arrDestDate" />
+            </div>
+          </div>
+          <div class="grid-4">
+            <div class="field">
+              <label for="arrDestTime">Godzina przyjazdu do celu</label>
+              <input type="time" id="arrDestTime" />
+            </div>
+            <div class="field"></div>
+            <div class="field"></div>
+            <div class="field"></div>
+          </div>
+
+          <h3>Powrót</h3>
+          <div class="grid-4">
+            <div class="field">
+              <label for="retDate">Data wyjazdu powrotnego *</label>
+              <input type="date" id="retDate" required />
+            </div>
+            <div class="field">
+              <label for="retTime">Godzina *</label>
+              <input type="time" id="retTime" required value="14:00" />
+            </div>
+            <div class="field">
+              <label for="arrHomeDate">Data przyjazdu do domu *</label>
+              <input type="date" id="arrHomeDate" required />
+            </div>
+            <div class="field">
+              <label for="arrHomeTime">Godzina *</label>
+              <input type="time" id="arrHomeTime" required value="22:00" />
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- SEKCJA 4: Przekroczenie granicy -->
+      <details class="form-section" open>
+        <summary><h2><span class="section-num">4</span> Przekroczenie granicy RP</h2></summary>
+        <div class="section-body">
+          <div class="grid-4">
+            <div class="field">
+              <label for="borderExitDate">Wyjazd — data *</label>
+              <input type="date" id="borderExitDate" required />
+            </div>
+            <div class="field">
+              <label for="borderExitTime">Wyjazd — godzina *</label>
+              <input type="time" id="borderExitTime" required value="17:00" />
+            </div>
+            <div class="field">
+              <label for="borderEntryDate">Przyjazd — data *</label>
+              <input type="date" id="borderEntryDate" required />
+            </div>
+            <div class="field">
+              <label for="borderEntryTime">Przyjazd — godzina *</label>
+              <input type="time" id="borderEntryTime" required value="22:00" />
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- SEKCJA 5: Data rozliczenia -->
+      <details class="form-section" open>
+        <summary><h2><span class="section-num">5</span> Rozliczenie</h2></summary>
+        <div class="section-body">
+          <div class="grid-2">
+            <div class="field">
+              <label for="settlementDate">Data rozliczenia *</label>
+              <input type="date" id="settlementDate" required />
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button type="button" id="fetchRateBtn" class="btn btn-secondary">
+                Pobierz kurs NBP
+              </button>
+            </div>
+          </div>
+          <div class="rate-info" id="rateInfo" style="display:none;">
+            <div class="rate-row">
+              <span>Numer tabeli NBP:</span>
+              <strong id="rateTableNo">-</strong>
+            </div>
+            <div class="rate-row">
+              <span>Waluta:</span>
+              <strong id="rateCurrency">-</strong>
+            </div>
+            <div class="rate-row">
+              <span>Kurs średni:</span>
+              <strong id="rateValue">-</strong>
+            </div>
+            <div class="rate-row">
+              <span>Z dnia:</span>
+              <strong id="rateDate">-</strong>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- PRZYCISK OBLICZ -->
+      <div class="actions">
+        <button type="button" id="calculateBtn" class="btn btn-primary btn-lg">
+          Oblicz rozliczenie
+        </button>
+      </div>
+    </form>
+
+    <!-- WYNIK -->
+    <section id="resultSection" class="result-section" style="display:none;">
+      <h2>Podsumowanie rozliczenia</h2>
+
+      <div class="result-grid">
+        <div class="result-card">
+          <div class="result-label">Ilość diet zagranicznych</div>
+          <div class="result-value" id="resDietCount">-</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Stawka diety</div>
+          <div class="result-value" id="resDietRate">-</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Razem diety (waluta)</div>
+          <div class="result-value" id="resDietTotal">-</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Kurs NBP</div>
+          <div class="result-value" id="resRate">-</div>
+        </div>
+        <div class="result-card accent">
+          <div class="result-label">Diety zagraniczne w PLN</div>
+          <div class="result-value" id="resDietPLN">-</div>
+        </div>
+      </div>
+
+      <div class="total-box">
+        <div class="total-label">DO WYPŁATY</div>
+        <div class="total-value" id="resTotalPLN">-</div>
+        <div class="total-words" id="resTotalWords">-</div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="generatePdfBtn" class="btn btn-primary btn-lg">
+          Pobierz PDF
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/countries.js"></script>
+  <script src="js/nbp-api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/pdf-generator.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
+    }
+  </script>
+</body>
+</html>
