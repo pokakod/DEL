@@ -11,6 +11,17 @@
     "settlementDate"
   ];
 
+  function roundTo15(d) {
+    var ms = 15 * 60 * 1000;
+    return new Date(Math.round(d.getTime() / ms) * ms);
+  }
+  function toDateStr(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function toTimeStr(d) {
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+
   var state = {
     selectedCountry: null,
     nbpRate: null,
@@ -70,15 +81,95 @@
     document.getElementById("calculateBtn").addEventListener("click", onCalculate);
     document.getElementById("generatePdfBtn").addEventListener("click", onGeneratePdf);
 
+    document.getElementById("clearFormBtn").addEventListener("click", function () {
+      if (!confirm("Wyczyścić wszystkie dane formularza?")) return;
+      FIELD_IDS.forEach(function (id) {
+        document.getElementById(id).value = "";
+      });
+      document.getElementById("depTime").value = "08:00";
+      document.getElementById("retTime").value = "14:00";
+      document.getElementById("arrHomeTime").value = "22:00";
+      document.getElementById("borderExitTime").value = "17:00";
+      document.getElementById("borderEntryTime").value = "22:00";
+      document.getElementById("settlementDate").value = new Date().toISOString().slice(0, 10);
+      document.getElementById("depFromHome").checked = false;
+      state.selectedCountry = null;
+      state.nbpRate = null;
+      state.calculation = null;
+      document.getElementById("countryInfo").style.display = "none";
+      document.getElementById("rateInfo").style.display = "none";
+      document.getElementById("resultSection").style.display = "none";
+      localStorage.removeItem(STORAGE_KEY);
+    });
+
     document.getElementById("depDate").addEventListener("change", function (e) {
+      var val = e.target.value;
       if (!document.getElementById("borderExitDate").value) {
-        document.getElementById("borderExitDate").value = e.target.value;
+        document.getElementById("borderExitDate").value = val;
       }
+      // Set min dates on all subsequent date fields
+      document.getElementById("arrDestDate").min = val;
+      document.getElementById("retDate").min = val;
+      document.getElementById("arrHomeDate").min = val;
+      document.getElementById("borderExitDate").min = val;
+      document.getElementById("borderEntryDate").min = val;
+      document.getElementById("settlementDate").min = val;
+    });
+    document.getElementById("retDate").addEventListener("change", function (e) {
+      var val = e.target.value;
+      document.getElementById("arrHomeDate").min = val;
+      document.getElementById("borderEntryDate").min = val;
     });
     document.getElementById("arrHomeDate").addEventListener("change", function (e) {
       if (!document.getElementById("borderEntryDate").value) {
         document.getElementById("borderEntryDate").value = e.target.value;
       }
+      var d = new Date(e.target.value);
+      d.setDate(d.getDate() + 1);
+      document.getElementById("settlementDate").value = toDateStr(d);
+    });
+
+    // Prevent buttons inside summary from toggling the details
+    document.getElementById("nowDepartBtn").closest("summary").addEventListener("click", function (e) {
+      if (e.target.closest(".summary-actions")) e.preventDefault();
+    });
+
+    document.getElementById("nowDepartBtn").addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var now = roundTo15(new Date());
+      document.getElementById("depDate").value = toDateStr(now);
+      document.getElementById("depTime").value = toTimeStr(now);
+      if (!document.getElementById("borderExitDate").value) {
+        document.getElementById("borderExitDate").value = toDateStr(now);
+      }
+      saveForm();
+    });
+
+    document.getElementById("nowReturnBtn").addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var now = roundTo15(new Date());
+      document.getElementById("retDate").value = toDateStr(now);
+      document.getElementById("retTime").value = toTimeStr(now);
+      document.getElementById("arrHomeDate").value = toDateStr(now);
+      document.getElementById("arrHomeTime").value = toTimeStr(now);
+      if (!document.getElementById("borderEntryDate").value) {
+        document.getElementById("borderEntryDate").value = toDateStr(now);
+      }
+      var nextDay = new Date(now);
+      nextDay.setDate(nextDay.getDate() + 1);
+      document.getElementById("settlementDate").value = toDateStr(nextDay);
+      saveForm();
+    });
+
+    document.getElementById("depFromHome").addEventListener("change", function () {
+      if (this.checked) {
+        var addr = document.getElementById("employeeAddress").value;
+        var city = addr.split(",").pop().trim().replace(/^\d{2}-\d{3}\s*/, "");
+        if (city) document.getElementById("depCity").value = city;
+      }
+      saveForm();
     });
 
     // Auto-save on any input change

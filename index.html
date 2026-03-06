@@ -11,10 +11,19 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <title>Rozliczenie Delegacji Zagranicznej</title>
   <link rel="stylesheet" href="style.css" />
+  <script>
+    (function(){var t=localStorage.getItem("theme");if(t==="dark")document.documentElement.setAttribute("data-theme","dark");})();
+  </script>
   <script src="js/jspdf.umd.min.js"></script>
 </head>
 <body>
   <div class="container">
+    <div class="header-toolbar">
+      <button type="button" id="darkModeToggle" class="dark-toggle" aria-label="Tryb ciemny"></button>
+      <button type="button" id="clearFormBtn" class="header-btn clear-btn" aria-label="Wyczyść formularz" title="Wyczyść formularz">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 4h10M6 4V3h4v1M5 4v9h6V4"/></svg>
+      </button>
+    </div>
     <header>
       <h1>Rozliczenie Delegacji Zagranicznej</h1>
       <p class="subtitle">Automatyczne obliczanie diet i kursów NBP</p>
@@ -101,54 +110,67 @@
 
       <!-- SEKCJA 3: Wyjazd / Przyjazd -->
       <details class="form-section" open>
-        <summary><h2><span class="section-num">3</span> Trasa podróży</h2></summary>
+        <summary>
+          <h2><span class="section-num">3</span> Trasa podróży</h2>
+          <div class="summary-actions">
+            <button type="button" id="nowDepartBtn" class="btn btn-sm btn-now">TERAZ JADĘ</button>
+            <button type="button" id="nowReturnBtn" class="btn btn-sm btn-now">TERAZ WRACAM</button>
+          </div>
+        </summary>
         <div class="section-body">
-          <h3>Wyjazd</h3>
-          <div class="grid-4">
-            <div class="field">
-              <label for="depCity">Z miejscowości *</label>
-              <input type="text" id="depCity" required placeholder="Katowice" />
+          <div class="inline-heading">
+            <h3>Wyjazd</h3>
+            <div class="inline-heading-actions">
+              <div class="field field-inline">
+                <label for="depCity">Z miejscowości *</label>
+                <input type="text" id="depCity" required placeholder="Katowice" />
+              </div>
+              <label class="checkbox-inline">
+                <input type="checkbox" id="depFromHome" />
+                Wyjazd z domu
+              </label>
             </div>
+          </div>
+          <div class="grid-2">
             <div class="field">
               <label for="depDate">Data *</label>
               <input type="date" id="depDate" required />
             </div>
             <div class="field">
               <label for="depTime">Godzina *</label>
-              <input type="time" id="depTime" required value="08:00" />
+              <input type="time" id="depTime" required value="08:00" step="900" />
             </div>
+          </div>
+          <div class="grid-2">
             <div class="field">
               <label for="arrDestDate">Data przyjazdu do celu</label>
               <input type="date" id="arrDestDate" />
             </div>
-          </div>
-          <div class="grid-4">
             <div class="field">
               <label for="arrDestTime">Godzina przyjazdu do celu</label>
-              <input type="time" id="arrDestTime" />
+              <input type="time" id="arrDestTime" step="900" />
             </div>
-            <div class="field"></div>
-            <div class="field"></div>
-            <div class="field"></div>
           </div>
 
           <h3>Powrót</h3>
-          <div class="grid-4">
+          <div class="grid-2">
             <div class="field">
               <label for="retDate">Data wyjazdu powrotnego *</label>
               <input type="date" id="retDate" required />
             </div>
             <div class="field">
               <label for="retTime">Godzina *</label>
-              <input type="time" id="retTime" required value="14:00" />
+              <input type="time" id="retTime" required value="14:00" step="900" />
             </div>
+          </div>
+          <div class="grid-2">
             <div class="field">
               <label for="arrHomeDate">Data przyjazdu do domu *</label>
               <input type="date" id="arrHomeDate" required />
             </div>
             <div class="field">
               <label for="arrHomeTime">Godzina *</label>
-              <input type="time" id="arrHomeTime" required value="22:00" />
+              <input type="time" id="arrHomeTime" required value="22:00" step="900" />
             </div>
           </div>
         </div>
@@ -158,22 +180,24 @@
       <details class="form-section" open>
         <summary><h2><span class="section-num">4</span> Przekroczenie granicy RP</h2></summary>
         <div class="section-body">
-          <div class="grid-4">
+          <div class="grid-2">
             <div class="field">
               <label for="borderExitDate">Wyjazd — data *</label>
               <input type="date" id="borderExitDate" required />
             </div>
             <div class="field">
               <label for="borderExitTime">Wyjazd — godzina *</label>
-              <input type="time" id="borderExitTime" required value="17:00" />
+              <input type="time" id="borderExitTime" required value="17:00" step="900" />
             </div>
+          </div>
+          <div class="grid-2">
             <div class="field">
               <label for="borderEntryDate">Przyjazd — data *</label>
               <input type="date" id="borderEntryDate" required />
             </div>
             <div class="field">
               <label for="borderEntryTime">Przyjazd — godzina *</label>
-              <input type="time" id="borderEntryTime" required value="22:00" />
+              <input type="time" id="borderEntryTime" required value="22:00" step="900" />
             </div>
           </div>
         </div>
@@ -274,6 +298,16 @@
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js");
     }
+    document.getElementById("darkModeToggle").addEventListener("click", function() {
+      var isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      if (isDark) {
+        document.documentElement.removeAttribute("data-theme");
+        localStorage.setItem("theme", "light");
+      } else {
+        document.documentElement.setAttribute("data-theme", "dark");
+        localStorage.setItem("theme", "dark");
+      }
+    });
   </script>
 </body>
 </html>
