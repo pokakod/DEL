@@ -1,4 +1,4 @@
-var CACHE_NAME = "delegacje-v1772829389";
+var CACHE_NAME = "delegacje-v1772829750";
 var ASSETS = [
   "./index.html",
   "./style.css",
@@ -7,6 +7,7 @@ var ASSETS = [
   "./js/nbp-api.js",
   "./js/utils.js",
   "./js/app.js",
+  "./js/signature-data.js",
   "./js/pdf-fonts.js",
   "./js/pdf-generator.js",
   "./js/jspdf.umd.min.js",

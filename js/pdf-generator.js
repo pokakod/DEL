@@ -1,184 +1,143 @@
-// Generator PDF rozliczenia delegacji — grayscale modernist
+// Generator PDF rozliczenia delegacji — flat design
 var PdfGenerator = (function () {
   var fmt = DelegationUtils.formatAmount;
   var fmtDate = DelegationUtils.formatDate;
   var toWords = DelegationUtils.amountToWords;
 
-  // Grayscale palette
+  // Flat grayscale
   var C = {
-    black:    [20, 20, 20],      // near-black for headers
-    dark:     [45, 45, 45],      // dark gray for body text
-    mid:      [110, 110, 110],   // medium gray for labels
-    light:    [170, 170, 170],   // light gray for muted text
-    rule:     [200, 200, 200],   // rule lines
-    zebra:    [245, 245, 245],   // zebra stripe bg
-    head:     [235, 235, 235],   // table header bg
-    white:    [255, 255, 255],
+    black:  [30, 30, 30],
+    text:   [50, 50, 50],
+    label:  [120, 120, 120],
+    line:   [210, 210, 210],
+    bg:     [245, 245, 245],
+    white:  [255, 255, 255],
   };
 
-  function setColor(doc, rgb) {
-    doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+  function tc(doc, c) { doc.setTextColor(c[0], c[1], c[2]); }
+  function fc(doc, c) { doc.setFillColor(c[0], c[1], c[2]); }
+  function dc(doc, c) { doc.setDrawColor(c[0], c[1], c[2]); }
+
+  function line(doc, x1, y, x2, c, w) {
+    dc(doc, c || C.line);
+    doc.setLineWidth(w || 0.2);
+    doc.line(x1, y, x2, y);
   }
 
-  function hLine(doc, x1, y1, x2, color, w) {
-    doc.setDrawColor(color[0], color[1], color[2]);
-    doc.setLineWidth(w || 0.25);
-    doc.line(x1, y1, x2, y1);
-  }
-
-  function drawRow(doc, x, y, cols, h, opts) {
+  function row(doc, x, y, cols, h, opts) {
     opts = opts || {};
-    var fs = opts.fontSize || 7;
-    var bold = opts.bold || false;
-    var fill = opts.fill || null;
-    var tc = opts.textColor || C.dark;
-
-    doc.setFontSize(fs);
-    doc.setFont("Arial", bold ? "bold" : "normal");
-
+    doc.setFontSize(opts.fs || 7);
+    doc.setFont("Arial", opts.bold ? "bold" : "normal");
+    var fill = opts.fill;
     var cx = x;
     for (var i = 0; i < cols.length; i++) {
       var col = cols[i];
-      var w = col.w;
-      var text = String(col.t || "");
-      var a = col.a || "left";
-
-      if (fill) {
-        doc.setFillColor(fill[0], fill[1], fill[2]);
-        doc.rect(cx, y, w, h, "F");
-      }
-
-      // Bottom border
-      hLine(doc, cx, y + h, cx + w, C.rule, 0.15);
-
-      var tx = a === "center" ? cx + w / 2 : a === "right" ? cx + w - 2.5 : cx + 2.5;
-      setColor(doc, tc);
-      doc.text(text, tx, y + h / 2, { align: a, baseline: "middle" });
+      var w = col.w, t = String(col.t || ""), a = col.a || "left";
+      if (fill) { fc(doc, fill); doc.rect(cx, y, w, h, "F"); }
+      line(doc, cx, y + h, cx + w, C.line, 0.15);
+      var tx = a === "center" ? cx + w / 2 : a === "right" ? cx + w - 2 : cx + 2;
+      tc(doc, opts.tc || C.text);
+      doc.text(t, tx, y + h / 2, { align: a, baseline: "middle" });
       cx += w;
     }
   }
 
-  function sectionHead(doc, x, y, w, text) {
+  function section(doc, x, y, w, text) {
     doc.setFont("Arial", "bold");
     doc.setFontSize(7.5);
-    setColor(doc, C.black);
+    tc(doc, C.black);
     doc.text(text, x, y);
-    y += 1.2;
-    hLine(doc, x, y, x + w, C.black, 0.6);
-    return y + 3.5;
-  }
-
-  function lbl(doc, x, y, text) {
-    doc.setFont("Arial", "normal");
-    doc.setFontSize(6);
-    setColor(doc, C.mid);
-    doc.text(text, x, y);
-  }
-
-  function val(doc, x, y, text) {
-    doc.setFont("Arial", "bold");
-    doc.setFontSize(7.5);
-    setColor(doc, C.dark);
-    doc.text(String(text || "—"), x, y);
+    y += 1.5;
+    line(doc, x, y, x + w, C.black, 0.4);
+    return y + 3;
   }
 
   function field(doc, x, y, l, v) {
-    lbl(doc, x, y, l);
-    val(doc, x, y + 3.5, v);
+    doc.setFont("Arial", "normal");
+    doc.setFontSize(6);
+    tc(doc, C.label);
+    doc.text(l, x, y);
+    doc.setFont("Arial", "bold");
+    doc.setFontSize(7.5);
+    tc(doc, C.text);
+    doc.text(String(v || "—"), x, y + 3.5);
   }
 
   function generate(data) {
     var jsPDF = window.jspdf.jsPDF;
     var doc = new jsPDF({ unit: "mm", format: "a4" });
-    var W = 210;
-    var M = 18;
-    var CW = W - 2 * M;
-    var y = 0;
-
+    var W = 210, M = 18, CW = W - 2 * M, y = 0;
     var sym = CURRENCY_SYMBOLS[data.country.currency] || data.country.currency;
 
     PdfFonts.register(doc);
 
-    // ============================================================
-    // HEADER — charcoal bar
-    // ============================================================
-    doc.setFillColor(C.black[0], C.black[1], C.black[2]);
-    doc.rect(0, 0, W, 24, "F");
+    // ── HEADER ──
+    fc(doc, C.black);
+    doc.rect(0, 0, W, 22, "F");
 
     doc.setFont("Arial", "bold");
-    doc.setFontSize(12);
-    setColor(doc, C.white);
-    doc.text("ROZLICZENIE DELEGACJI ZAGRANICZNEJ", W / 2, 10, { align: "center" });
+    doc.setFontSize(11);
+    tc(doc, C.white);
+    doc.text("ROZLICZENIE DELEGACJI ZAGRANICZNEJ", W / 2, 9, { align: "center" });
 
     doc.setFont("Arial", "normal");
     doc.setFontSize(7);
-    doc.setTextColor(160, 160, 160);
+    doc.setTextColor(170, 170, 170);
     var sub = data.trip.number;
     if (data.trip.projectNumber) sub += "  /  Projekt " + data.trip.projectNumber;
-    doc.text(sub, W / 2, 16.5, { align: "center" });
+    doc.text(sub, W / 2, 15, { align: "center" });
 
     doc.setFontSize(6);
-    doc.text("Data rozliczenia: " + fmtDate(data.settlementDate), W - M, 21, { align: "right" });
+    doc.text(fmtDate(data.settlementDate), W - M, 19, { align: "right" });
 
-    y = 31;
+    y = 28;
 
-    // ============================================================
-    // EMPLOYEE + TRIP INFO
-    // ============================================================
-    var col1 = M;
-    var col2 = M + CW / 2 + 5;
+    // ── DANE ──
+    var c1 = M, c2 = M + CW / 2 + 4;
 
     doc.setFont("Arial", "bold");
     doc.setFontSize(6);
-    setColor(doc, C.light);
-    doc.text("DELEGOWANY", col1, y);
-    doc.text("WYJAZD", col2, y);
+    tc(doc, C.label);
+    doc.text("DELEGOWANY", c1, y);
+    doc.text("WYJAZD", c2, y);
     y += 4;
 
-    field(doc, col1, y, "Imię i nazwisko", data.employee.name);
-    field(doc, col2, y, "Cel podróży", data.trip.purpose);
+    field(doc, c1, y, "Imię i nazwisko", data.employee.name);
+    field(doc, c2, y, "Cel podróży", data.trip.purpose);
     y += 8;
 
-    field(doc, col1, y, "Adres", data.employee.address || "—");
-    field(doc, col2, y, "Kraj docelowy", data.trip.country);
+    field(doc, c1, y, "Adres", data.employee.address || "—");
+    field(doc, c2, y, "Kraj docelowy", data.trip.country);
     y += 8;
 
-    if (data.employee.nip) {
-      field(doc, col1, y, "NIP", data.employee.nip);
-    }
-    field(doc, col2, y, "Miejscowość", data.trip.destinationCity);
+    if (data.employee.nip) field(doc, c1, y, "NIP", data.employee.nip);
+    field(doc, c2, y, "Miejscowość", data.trip.destinationCity);
     y += 8;
 
     if (data.employee.email || data.employee.phone) {
-      if (data.employee.email) field(doc, col1, y, "Email", data.employee.email);
-      if (data.employee.phone) field(doc, col2, y, "Telefon", data.employee.phone);
+      if (data.employee.email) field(doc, c1, y, "Email", data.employee.email);
+      if (data.employee.phone) field(doc, c2, y, "Telefon", data.employee.phone);
       y += 8;
     }
 
-    field(doc, col1, y, "Środek lokomocji", data.trip.transport);
+    field(doc, c1, y, "Środek lokomocji", data.trip.transport);
     y += 10;
 
-    hLine(doc, M, y, M + CW, C.rule, 0.25);
-    y += 6;
+    line(doc, M, y, M + CW, C.line);
+    y += 5;
 
-    // ============================================================
-    // TRASA PODRÓŻY
-    // ============================================================
-    y = sectionHead(doc, M, y, CW, "TRASA PODRÓŻY");
-
+    // ── TRASA PODRÓŻY ──
+    y = section(doc, M, y, CW, "TRASA PODRÓŻY");
     var tw = [CW * 0.22, CW * 0.16, CW * 0.12, CW * 0.22, CW * 0.16, CW * 0.12];
 
-    drawRow(doc, M, y, [
-      { w: tw[0], t: "Skąd", a: "center" },
-      { w: tw[1], t: "Data", a: "center" },
-      { w: tw[2], t: "Godz.", a: "center" },
-      { w: tw[3], t: "Dokąd", a: "center" },
-      { w: tw[4], t: "Data", a: "center" },
-      { w: tw[5], t: "Godz.", a: "center" },
-    ], 5.5, { bold: true, fill: C.head, textColor: C.black, fontSize: 6.5 });
+    row(doc, M, y, [
+      { w: tw[0], t: "Skąd", a: "center" }, { w: tw[1], t: "Data", a: "center" },
+      { w: tw[2], t: "Godz.", a: "center" }, { w: tw[3], t: "Dokąd", a: "center" },
+      { w: tw[4], t: "Data", a: "center" }, { w: tw[5], t: "Godz.", a: "center" },
+    ], 5.5, { bold: true, fill: C.bg, tc: C.black, fs: 6.5 });
     y += 5.5;
 
-    drawRow(doc, M, y, [
+    row(doc, M, y, [
       { w: tw[0], t: data.departure.city },
       { w: tw[1], t: fmtDate(data.departure.date), a: "center" },
       { w: tw[2], t: data.departure.time, a: "center" },
@@ -188,61 +147,51 @@ var PdfGenerator = (function () {
     ], 5.5);
     y += 5.5;
 
-    drawRow(doc, M, y, [
+    row(doc, M, y, [
       { w: tw[0], t: data.trip.destinationCity },
       { w: tw[1], t: fmtDate(data.returnDep.date), a: "center" },
       { w: tw[2], t: data.returnDep.time, a: "center" },
       { w: tw[3], t: data.departure.city },
       { w: tw[4], t: fmtDate(data.arrivalHome.date), a: "center" },
       { w: tw[5], t: data.arrivalHome.time, a: "center" },
-    ], 5.5, { fill: C.zebra });
-    y += 9;
+    ], 5.5);
+    y += 8;
 
-    // ============================================================
-    // PRZEKROCZENIE GRANICY RP
-    // ============================================================
-    y = sectionHead(doc, M, y, CW, "PRZEKROCZENIE GRANICY RP");
-
+    // ── PRZEKROCZENIE GRANICY ──
+    y = section(doc, M, y, CW, "PRZEKROCZENIE GRANICY RP");
     var bw = CW / 3;
 
-    drawRow(doc, M, y, [
-      { w: bw, t: "", a: "center" },
-      { w: bw, t: "Data", a: "center" },
-      { w: bw, t: "Godzina", a: "center" },
-    ], 5.5, { bold: true, fill: C.head, textColor: C.black, fontSize: 6.5 });
+    row(doc, M, y, [
+      { w: bw, t: "" }, { w: bw, t: "Data", a: "center" }, { w: bw, t: "Godzina", a: "center" },
+    ], 5.5, { bold: true, fill: C.bg, tc: C.black, fs: 6.5 });
     y += 5.5;
 
-    drawRow(doc, M, y, [
+    row(doc, M, y, [
       { w: bw, t: "Wyjazd z RP" },
       { w: bw, t: fmtDate(data.borderExit.date), a: "center" },
       { w: bw, t: data.borderExit.time, a: "center" },
     ], 5.5);
     y += 5.5;
 
-    drawRow(doc, M, y, [
+    row(doc, M, y, [
       { w: bw, t: "Przyjazd do RP" },
       { w: bw, t: fmtDate(data.borderEntry.date), a: "center" },
       { w: bw, t: data.borderEntry.time, a: "center" },
-    ], 5.5, { fill: C.zebra });
-    y += 9;
+    ], 5.5);
+    y += 8;
 
-    // ============================================================
-    // ROZLICZENIE KOSZTÓW
-    // ============================================================
-    y = sectionHead(doc, M, y, CW, "ROZLICZENIE KOSZTÓW");
-
+    // ── ROZLICZENIE KOSZTÓW ──
+    y = section(doc, M, y, CW, "ROZLICZENIE KOSZTÓW");
     var dw = [CW * 0.42, CW * 0.14, CW * 0.20, CW * 0.24];
 
-    drawRow(doc, M, y, [
-      { w: dw[0], t: "Pozycja" },
-      { w: dw[1], t: "Ilość", a: "center" },
-      { w: dw[2], t: "Stawka", a: "right" },
-      { w: dw[3], t: "Kwota", a: "right" },
-    ], 5.5, { bold: true, fill: C.head, textColor: C.black, fontSize: 6.5 });
+    row(doc, M, y, [
+      { w: dw[0], t: "Pozycja" }, { w: dw[1], t: "Ilość", a: "center" },
+      { w: dw[2], t: "Stawka", a: "right" }, { w: dw[3], t: "Kwota", a: "right" },
+    ], 5.5, { bold: true, fill: C.bg, tc: C.black, fs: 6.5 });
     y += 5.5;
 
     var dietLabel = DelegationUtils.formatDietCount(data.calculation.foreignDietInfo);
-    drawRow(doc, M, y, [
+    row(doc, M, y, [
       { w: dw[0], t: "Diety zagraniczne (" + data.trip.country + ")" },
       { w: dw[1], t: dietLabel, a: "center" },
       { w: dw[2], t: fmt(data.calculation.effectiveDietRate) + " " + sym, a: "right" },
@@ -251,15 +200,15 @@ var PdfGenerator = (function () {
     y += 5.5;
 
     var domTotal = data.calculation.domesticDiets * 45;
-    drawRow(doc, M, y, [
+    row(doc, M, y, [
       { w: dw[0], t: "Diety krajowe" },
       { w: dw[1], t: fmt(data.calculation.domesticDiets), a: "center" },
       { w: dw[2], t: "45,00 zł", a: "right" },
       { w: dw[3], t: domTotal > 0 ? fmt(domTotal) + " zł" : "—", a: "right" },
-    ], 5.5, { fill: C.zebra });
+    ], 5.5);
     y += 5.5;
 
-    drawRow(doc, M, y, [
+    row(doc, M, y, [
       { w: dw[0], t: "Wydatki krajowe wg załączników" },
       { w: dw[1], t: "—", a: "center" },
       { w: dw[2], t: "—", a: "right" },
@@ -267,102 +216,77 @@ var PdfGenerator = (function () {
     ], 5.5);
     y += 5.5;
 
-    drawRow(doc, M, y, [
+    row(doc, M, y, [
       { w: dw[0], t: "Ewidencja przebiegu pojazdu" },
       { w: dw[1], t: "—", a: "center" },
       { w: dw[2], t: "—", a: "right" },
       { w: dw[3], t: "—", a: "right" },
-    ], 5.5, { fill: C.zebra });
-    y += 9;
+    ], 5.5);
+    y += 8;
 
-    // ============================================================
-    // KURS NBP — inline
-    // ============================================================
-    y = sectionHead(doc, M, y, CW, "KURS WYMIANY WALUT");
-
+    // ── KURS NBP — inline ──
+    y = section(doc, M, y, CW, "KURS WYMIANY WALUT");
     var items = [
       { l: "Tabela NBP:", v: data.nbpRate.no },
       { l: "Waluta:", v: data.country.currency },
       { l: "Kurs średni:", v: fmt(data.nbpRate.mid, 4) + " zł" },
       { l: "Z dnia:", v: fmtDate(data.nbpRate.effectiveDate) },
     ];
-
     var rx = M;
     for (var i = 0; i < items.length; i++) {
-      doc.setFont("Arial", "normal");
-      doc.setFontSize(6.5);
-      setColor(doc, C.mid);
+      doc.setFont("Arial", "normal"); doc.setFontSize(6.5); tc(doc, C.label);
       doc.text(items[i].l, rx, y);
       var lw = doc.getTextWidth(items[i].l);
-
-      doc.setFont("Arial", "bold");
-      doc.setFontSize(7);
-      setColor(doc, C.dark);
+      doc.setFont("Arial", "bold"); doc.setFontSize(7); tc(doc, C.text);
       doc.text(items[i].v, rx + lw + 1.5, y);
-      var vw = doc.getTextWidth(items[i].v);
-      rx += lw + vw + 8;
+      rx += lw + doc.getTextWidth(items[i].v) + 8;
     }
-    y += 10;
+    y += 9;
 
-    // ============================================================
-    // DO WYPŁATY — prominent box
-    // ============================================================
-    var boxH = 26;
-    var boxR = 2;
+    // ── DO WYPŁATY — flat box ──
+    var boxH = 24;
+    fc(doc, C.bg);
+    doc.rect(M, y, CW, boxH, "F");
+    line(doc, M, y, M + CW, C.black, 0.4);
+    line(doc, M, y + boxH, M + CW, C.black, 0.4);
 
-    doc.setFillColor(C.black[0], C.black[1], C.black[2]);
-    doc.roundedRect(M, y, CW, boxH, boxR, boxR, "F");
+    doc.setFont("Arial", "normal"); doc.setFontSize(6.5); tc(doc, C.label);
+    doc.text("DO WYPŁATY", M + 6, y + 5);
 
-    // Label
-    doc.setFont("Arial", "normal");
-    doc.setFontSize(6.5);
-    doc.setTextColor(140, 140, 140);
-    doc.text("DO WYPŁATY", M + 7, y + 5.5);
+    doc.setFont("Arial", "bold"); doc.setFontSize(18); tc(doc, C.black);
+    doc.text(fmt(data.calculation.totalPLN) + " PLN", M + CW - 6, y + 8, { align: "right" });
 
-    // PLN amount
-    doc.setFont("Arial", "bold");
-    doc.setFontSize(18);
-    setColor(doc, C.white);
-    doc.text(fmt(data.calculation.totalPLN) + " PLN", M + CW - 7, y + 8.5, { align: "right" });
+    doc.setFontSize(9); tc(doc, C.label);
+    doc.text(fmt(data.calculation.totalForeign) + " " + data.country.currency, M + CW - 6, y + 14.5, { align: "right" });
 
-    // Foreign currency
-    doc.setFontSize(9);
-    doc.setTextColor(160, 160, 160);
-    doc.text(fmt(data.calculation.totalForeign) + " " + data.country.currency, M + CW - 7, y + 15, { align: "right" });
-
-    // Words
-    doc.setFont("Arial", "normal");
-    doc.setFontSize(5.5);
-    doc.setTextColor(120, 120, 120);
-    doc.text("Słownie: " + toWords(data.calculation.totalPLN, "PLN"), M + 7, y + 21);
+    doc.setFont("Arial", "normal"); doc.setFontSize(5.5); tc(doc, C.label);
+    doc.text("Słownie: " + toWords(data.calculation.totalPLN, "PLN"), M + 6, y + 20);
 
     y += boxH + 14;
 
-    // ============================================================
-    // SIGNATURES
-    // ============================================================
+    // ── PODPISY ──
     var sigW = 55;
     var sigGap = CW - 2 * sigW;
 
-    hLine(doc, M, y, M + sigW, C.light, 0.35);
-    hLine(doc, M + sigW + sigGap, y, M + CW, C.light, 0.35);
+    // Embedded signature
+    if (typeof SIGNATURE_IMG !== "undefined") {
+      var imgW = 38, imgH = 12;
+      doc.addImage(SIGNATURE_IMG, "PNG", M + (sigW - imgW) / 2, y - imgH - 1, imgW, imgH);
+    }
+
+    line(doc, M, y, M + sigW, C.label, 0.3);
+    line(doc, M + sigW + sigGap, y, M + CW, C.label, 0.3);
     y += 3;
 
-    doc.setFont("Arial", "normal");
-    doc.setFontSize(5.5);
-    setColor(doc, C.light);
+    doc.setFont("Arial", "normal"); doc.setFontSize(5.5); tc(doc, C.label);
     doc.text("data i podpis delegowanego", M + sigW / 2, y, { align: "center" });
     doc.text("podpis zatwierdzającego", M + sigW + sigGap + sigW / 2, y, { align: "center" });
 
-    // ============================================================
-    // FOOTER
-    // ============================================================
+    // ── STOPKA ──
     var fy = 284;
-    hLine(doc, M, fy, M + CW, C.rule, 0.15);
+    line(doc, M, fy, M + CW, C.line, 0.15);
     fy += 3;
-
-    doc.setFontSize(5);
-    setColor(doc, C.light);
+    doc.setFontSize(5); tc(doc, C.label);
     var fp = [data.employee.name];
     if (data.employee.address) fp.push(data.employee.address);
     if (data.employee.nip) fp.push("NIP: " + data.employee.nip);
@@ -370,11 +294,8 @@ var PdfGenerator = (function () {
     if (data.employee.phone) fp.push(data.employee.phone);
     doc.text(fp.join("  \u2022  "), W / 2, fy, { align: "center" });
 
-    // ============================================================
-    // SAVE
-    // ============================================================
-    var fileName = data.trip.number.replace(/\//g, "_") + "_Delegacja.pdf";
-    doc.save(fileName);
+    // ── SAVE ──
+    doc.save(data.trip.number.replace(/\//g, "_") + "_Delegacja.pdf");
   }
 
   return { generate: generate };
