@@ -267,8 +267,8 @@ var PdfGenerator = (function () {
     var sigW = 55;
     var sigGap = CW - 2 * sigW;
 
-    // Embedded signature
-    if (typeof SIGNATURE_IMG !== "undefined") {
+    // Embedded signature (if selected)
+    if (data.signature !== "none" && typeof SIGNATURE_IMG !== "undefined") {
       var imgW = 38, imgH = 12;
       doc.addImage(SIGNATURE_IMG, "PNG", M + (sigW - imgW) / 2, y - imgH - 1, imgW, imgH);
     }

@@ -39,7 +39,7 @@
      "fetchRateBtn", "calculateBtn", "generatePdfBtn", "clearFormBtn",
      "resultSection", "resDietCount", "resDietRate", "resDietTotal",
      "resRate", "resDietPLN", "resTotalPLN", "resTotalWords",
-     "depFromHome", "nowDepartBtn", "nowReturnBtn"
+     "depFromHome", "nowDepartBtn", "nowReturnBtn", "signatureSelect"
     ].forEach(function (id) { els[id] = document.getElementById(id); });
 
     initCountrySelect();
@@ -332,6 +332,7 @@
       country: state.selectedCountry,
       nbpRate: state.nbpRate,
       calculation: state.calculation,
+      signature: els.signatureSelect.value,
     });
   }
 

@@ -1,4 +1,4 @@
-var CACHE_NAME = "delegacje-v1772829931";
+var CACHE_NAME = "delegacje-v1772830268";
 var ASSETS = [
   "./index.html",
   "./style.css",
